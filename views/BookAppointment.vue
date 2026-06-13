@@ -69,8 +69,6 @@ export default {
     fetch("https://iq9dada385.execute-api.eu-north-1.amazonaws.com/slots")
       .then(res => res.json())
       .then(data => {
-        console.log("Slots:", data);
-
         this.slots = data
           .filter(slot => !slot.isBooked)
           .map(slot => slot.slot);
@@ -93,21 +91,32 @@ export default {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          body: JSON.stringify(payload)
-        })
+        body: JSON.stringify(payload)
       })
-        .then(res => res.json())
-        .then(() => {
+        .then(async (res) => {
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.error || data.message || "Booking failed");
+          }
+
           alert("Appointment booked!");
 
           this.name = "";
           this.symptoms = "";
           this.selectedSlot = "";
+
+          return fetch("https://iq9dada385.execute-api.eu-north-1.amazonaws.com/slots");
+        })
+        .then(res => res.json())
+        .then(data => {
+          this.slots = data
+            .filter(slot => !slot.isBooked)
+            .map(slot => slot.slot);
         })
         .catch(err => {
           console.error("Error booking appointment:", err);
-          alert("Failed to book appointment.");
+          alert("Failed to book appointment: " + err.message);
         });
     }
   }
